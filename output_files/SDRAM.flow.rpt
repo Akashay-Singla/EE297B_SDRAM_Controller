@@ -1,5 +1,5 @@
 Flow report for SDRAM
-Sun Jun 12 22:11:38 2022
+Fri Jun 24 23:18:08 2022
 Quartus Prime Version 21.1.0 Build 842 10/21/2021 SJ Lite Edition
 
 
@@ -41,20 +41,20 @@ https://fpgasoftware.intel.com/eula.
 +----------------------------------------------------------------------------------+
 ; Flow Summary                                                                     ;
 +------------------------------------+---------------------------------------------+
-; Flow Status                        ; Successful - Sun Jun 12 22:11:38 2022       ;
+; Flow Status                        ; Successful - Fri Jun 24 23:18:08 2022       ;
 ; Quartus Prime Version              ; 21.1.0 Build 842 10/21/2021 SJ Lite Edition ;
 ; Revision Name                      ; SDRAM                                       ;
 ; Top-level Entity Name              ; DE10_LITE_Golden_Top                        ;
 ; Family                             ; MAX 10                                      ;
 ; Device                             ; 10M50DAF484C6GES                            ;
 ; Timing Models                      ; Preliminary                                 ;
-; Total logic elements               ; 98 / 49,760 ( < 1 % )                       ;
-;     Total combinational functions  ; 91 / 49,760 ( < 1 % )                       ;
-;     Dedicated logic registers      ; 53 / 49,760 ( < 1 % )                       ;
-; Total registers                    ; 53                                          ;
+; Total logic elements               ; 1,193 / 49,760 ( 2 % )                      ;
+;     Total combinational functions  ; 954 / 49,760 ( 2 % )                        ;
+;     Dedicated logic registers      ; 684 / 49,760 ( 1 % )                        ;
+; Total registers                    ; 684                                         ;
 ; Total pins                         ; 148 / 360 ( 41 % )                          ;
 ; Total virtual pins                 ; 0                                           ;
-; Total memory bits                  ; 0 / 1,677,312 ( 0 % )                       ;
+; Total memory bits                  ; 512 / 1,677,312 ( < 1 % )                   ;
 ; Embedded Multiplier 9-bit elements ; 0 / 288 ( 0 % )                             ;
 ; Total PLLs                         ; 0 / 4 ( 0 % )                               ;
 ; UFM blocks                         ; 0 / 1 ( 0 % )                               ;
@@ -67,39 +67,45 @@ https://fpgasoftware.intel.com/eula.
 +-------------------+---------------------+
 ; Option            ; Setting             ;
 +-------------------+---------------------+
-; Start date & time ; 06/12/2022 22:09:52 ;
+; Start date & time ; 06/24/2022 23:12:06 ;
 ; Main task         ; Compilation         ;
 ; Revision Name     ; SDRAM               ;
 +-------------------+---------------------+
 
 
-+---------------------------------------------------------------------------------------------------------------------------------------------------------+
-; Flow Non-Default Global Settings                                                                                                                        ;
-+-------------------------------------+----------------------------------------+---------------+----------------------+-----------------------------------+
-; Assignment Name                     ; Value                                  ; Default Value ; Entity Name          ; Section Id                        ;
-+-------------------------------------+----------------------------------------+---------------+----------------------+-----------------------------------+
-; COMPILER_SIGNATURE_ID               ; 52229718308.165509699105988            ; --            ; --                   ; --                                ;
-; EDA_DESIGN_ENTRY_SYNTHESIS_TOOL     ; Precision Synthesis                    ; <None>        ; --                   ; --                                ;
-; EDA_GENERATE_FUNCTIONAL_NETLIST     ; Off                                    ; --            ; --                   ; eda_board_design_timing           ;
-; EDA_GENERATE_FUNCTIONAL_NETLIST     ; Off                                    ; --            ; --                   ; eda_board_design_boundary_scan    ;
-; EDA_GENERATE_FUNCTIONAL_NETLIST     ; Off                                    ; --            ; --                   ; eda_board_design_signal_integrity ;
-; EDA_GENERATE_FUNCTIONAL_NETLIST     ; Off                                    ; --            ; --                   ; eda_board_design_symbol           ;
-; EDA_INPUT_DATA_FORMAT               ; Vqm                                    ; --            ; --                   ; eda_design_synthesis              ;
-; EDA_LMF_FILE                        ; mentor.lmf                             ; --            ; --                   ; eda_design_synthesis              ;
-; EDA_NETLIST_WRITER_OUTPUT_DIR       ; simulation/modelsim                    ; --            ; --                   ; eda_simulation                    ;
-; EDA_OUTPUT_DATA_FORMAT              ; Verilog Hdl                            ; --            ; --                   ; eda_simulation                    ;
-; EDA_SIMULATION_TOOL                 ; ModelSim (Verilog)                     ; <None>        ; --                   ; --                                ;
-; EDA_TIME_SCALE                      ; 1 ps                                   ; --            ; --                   ; eda_simulation                    ;
-; MAX_CORE_JUNCTION_TEMP              ; 85                                     ; --            ; --                   ; --                                ;
-; MIN_CORE_JUNCTION_TEMP              ; 0                                      ; --            ; --                   ; --                                ;
-; PARTITION_COLOR                     ; -- (Not supported for targeted family) ; --            ; DE10_LITE_Golden_Top ; Top                               ;
-; PARTITION_FITTER_PRESERVATION_LEVEL ; -- (Not supported for targeted family) ; --            ; DE10_LITE_Golden_Top ; Top                               ;
-; PARTITION_NETLIST_TYPE              ; -- (Not supported for targeted family) ; --            ; DE10_LITE_Golden_Top ; Top                               ;
-; POWER_BOARD_THERMAL_MODEL           ; None (CONSERVATIVE)                    ; --            ; --                   ; --                                ;
-; POWER_PRESET_COOLING_SOLUTION       ; 23 MM HEAT SINK WITH 200 LFPM AIRFLOW  ; --            ; --                   ; --                                ;
-; PROJECT_OUTPUT_DIRECTORY            ; output_files                           ; --            ; --                   ; --                                ;
-; TOP_LEVEL_ENTITY                    ; DE10_LITE_Golden_Top                   ; SDRAM         ; --                   ; --                                ;
-+-------------------------------------+----------------------------------------+---------------+----------------------+-----------------------------------+
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+; Flow Non-Default Global Settings                                                                                                                                               ;
++-------------------------------------+---------------------------------------------------------------+---------------+----------------------+-----------------------------------+
+; Assignment Name                     ; Value                                                         ; Default Value ; Entity Name          ; Section Id                        ;
++-------------------------------------+---------------------------------------------------------------+---------------+----------------------+-----------------------------------+
+; COMPILER_SIGNATURE_ID               ; 52229718308.165613752605492                                   ; --            ; --                   ; --                                ;
+; EDA_DESIGN_ENTRY_SYNTHESIS_TOOL     ; Precision Synthesis                                           ; <None>        ; --                   ; --                                ;
+; EDA_GENERATE_FUNCTIONAL_NETLIST     ; Off                                                           ; --            ; --                   ; eda_board_design_timing           ;
+; EDA_GENERATE_FUNCTIONAL_NETLIST     ; Off                                                           ; --            ; --                   ; eda_board_design_boundary_scan    ;
+; EDA_GENERATE_FUNCTIONAL_NETLIST     ; Off                                                           ; --            ; --                   ; eda_board_design_signal_integrity ;
+; EDA_GENERATE_FUNCTIONAL_NETLIST     ; Off                                                           ; --            ; --                   ; eda_board_design_symbol           ;
+; EDA_INPUT_DATA_FORMAT               ; Vqm                                                           ; --            ; --                   ; eda_design_synthesis              ;
+; EDA_LMF_FILE                        ; mentor.lmf                                                    ; --            ; --                   ; eda_design_synthesis              ;
+; EDA_NETLIST_WRITER_OUTPUT_DIR       ; simulation/modelsim                                           ; --            ; --                   ; eda_simulation                    ;
+; EDA_OUTPUT_DATA_FORMAT              ; Verilog Hdl                                                   ; --            ; --                   ; eda_simulation                    ;
+; EDA_SIMULATION_TOOL                 ; ModelSim (Verilog)                                            ; <None>        ; --                   ; --                                ;
+; EDA_TIME_SCALE                      ; 1 ps                                                          ; --            ; --                   ; eda_simulation                    ;
+; MAX_CORE_JUNCTION_TEMP              ; 85                                                            ; --            ; --                   ; --                                ;
+; MIN_CORE_JUNCTION_TEMP              ; 0                                                             ; --            ; --                   ; --                                ;
+; MISC_FILE                           ; sys_console/synthesis/../sys_console.cmp                      ; --            ; --                   ; --                                ;
+; MISC_FILE                           ; sys_console/synthesis/../../sys_console.qsys                  ; --            ; --                   ; --                                ;
+; PARTITION_COLOR                     ; -- (Not supported for targeted family)                        ; --            ; DE10_LITE_Golden_Top ; Top                               ;
+; PARTITION_FITTER_PRESERVATION_LEVEL ; -- (Not supported for targeted family)                        ; --            ; DE10_LITE_Golden_Top ; Top                               ;
+; PARTITION_NETLIST_TYPE              ; -- (Not supported for targeted family)                        ; --            ; DE10_LITE_Golden_Top ; Top                               ;
+; POWER_BOARD_THERMAL_MODEL           ; None (CONSERVATIVE)                                           ; --            ; --                   ; --                                ;
+; POWER_PRESET_COOLING_SOLUTION       ; 23 MM HEAT SINK WITH 200 LFPM AIRFLOW                         ; --            ; --                   ; --                                ;
+; PROJECT_OUTPUT_DIRECTORY            ; output_files                                                  ; --            ; --                   ; --                                ;
+; SLD_FILE                            ; sys_console/synthesis/sys_console.debuginfo                   ; --            ; --                   ; --                                ;
+; SLD_INFO                            ; QSYS_NAME sys_console HAS_SOPCINFO 1 GENERATION_ID 1655578442 ; --            ; sys_console          ; --                                ;
+; SOPCINFO_FILE                       ; sys_console/synthesis/../../sys_console.sopcinfo              ; --            ; --                   ; --                                ;
+; SYNTHESIS_ONLY_QIP                  ; On                                                            ; --            ; --                   ; --                                ;
+; TOP_LEVEL_ENTITY                    ; DE10_LITE_Golden_Top                                          ; SDRAM         ; --                   ; --                                ;
++-------------------------------------+---------------------------------------------------------------+---------------+----------------------+-----------------------------------+
 
 
 +--------------------------------------------------------------------------------------------------------------------------+
@@ -107,12 +113,12 @@ https://fpgasoftware.intel.com/eula.
 +----------------------+--------------+-------------------------+---------------------+------------------------------------+
 ; Module Name          ; Elapsed Time ; Average Processors Used ; Peak Virtual Memory ; Total CPU Time (on all processors) ;
 +----------------------+--------------+-------------------------+---------------------+------------------------------------+
-; Analysis & Synthesis ; 00:00:31     ; 1.0                     ; 4743 MB             ; 00:00:43                           ;
-; Fitter               ; 00:00:30     ; 1.0                     ; 5381 MB             ; 00:00:30                           ;
-; Assembler            ; 00:00:10     ; 1.0                     ; 4720 MB             ; 00:00:08                           ;
-; Timing Analyzer      ; 00:00:11     ; 1.0                     ; 4821 MB             ; 00:00:09                           ;
-; EDA Netlist Writer   ; 00:00:03     ; 1.0                     ; 4647 MB             ; 00:00:02                           ;
-; Total                ; 00:01:25     ; --                      ; --                  ; 00:01:32                           ;
+; Analysis & Synthesis ; 00:02:54     ; 1.0                     ; 4836 MB             ; 00:02:29                           ;
+; Fitter               ; 00:00:55     ; 1.1                     ; 5456 MB             ; 00:00:51                           ;
+; Assembler            ; 00:00:25     ; 1.0                     ; 4736 MB             ; 00:00:15                           ;
+; Timing Analyzer      ; 00:00:28     ; 1.1                     ; 4833 MB             ; 00:00:16                           ;
+; EDA Netlist Writer   ; 00:00:11     ; 1.0                     ; 4671 MB             ; 00:00:07                           ;
+; Total                ; 00:04:53     ; --                      ; --                  ; 00:03:58                           ;
 +----------------------+--------------+-------------------------+---------------------+------------------------------------+
 
 

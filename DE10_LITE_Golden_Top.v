@@ -23,12 +23,12 @@ module DE10_LITE_Golden_Top(
 	output reg            	   DRAM_RAS_N,
 	output reg	          		DRAM_UDQM,
 	output reg	            	DRAM_WE_N,
-	output		     [7:0]		HEX0,
-	output		     [7:0]		HEX1,
-	output		     [7:0]		HEX2,
-	output		     [7:0]		HEX3,
-	output		     [7:0]		HEX4,
-	output		     [7:0]		HEX5,
+	output		    [7:0]		HEX0,
+	output		    [7:0]		HEX1,
+	output		    [7:0]		HEX2,
+	output		    [7:0]		HEX3,
+	output		    [7:0]		HEX4,
+	output		    [7:0]		HEX5,
 	input 		     [1:0]		KEY,
 	output	reg	  [9:0]		LEDR,
 	input 		     [9:0]		SW,
@@ -36,15 +36,33 @@ module DE10_LITE_Golden_Top(
 	inout 		    [35:0]		GPIO
 );
 reg [3:0] command; 
-
 reg [4:0] state,nstate;
-reg [15:0] data_in,data_in_ff,data_out,DRAM_DQ_temp;
+reg [15:0] data_in;
+reg [31:0] write_data;
+reg [9:0] write_addr_col;
+reg [12:0] addr_row;
+reg [9:0] read_addr_col;
+reg [15:0] read_data;
 reg [12:0] addr;
 reg [19:0] init_count;
 reg [1:0] precharge_count;
 reg [3:0] refresh_count;
 reg [2:0] nop_count;
+reg data_ready;
 wire clk,rst;
+reg read_LED1, read_LED2,read_LED3, read_LED4,read_LED5;
+wire [31:0] master_address; //output
+reg [31:0] master_readdata; //input
+wire master_read; //output
+wire master_write; //output
+wire master_reset;//output
+wire [31:0] master_writedata;//output
+reg master_waitrequest;//input
+reg master_readdatavalid;//input
+wire [3:0] master_byteenable;//output
+reg rstate_ready;
+
+
 assign DRAM_CLK = MAX10_CLK1_50;
 assign clk = MAX10_CLK1_50;
 assign rst = KEY[0];
@@ -52,42 +70,65 @@ assign HEX0 = numdisp(DRAM_DQ[3:0]);
 assign HEX1 = numdisp(DRAM_DQ[7:4]);
 assign HEX2 = numdisp(DRAM_DQ[11:8]);
 assign HEX3 = numdisp(DRAM_DQ[15:12]);
-//assign {DRAM_CS_N, DRAM_RAS_N, DRAM_CAS_N, DRAM_WE_N} = command;
-//assign DRAM_DQ = DRAM_DQ_temp;
+assign HEX4 = numdisp(master_readdata[3:0]);
+assign HEX5 = numdisp(master_readdata[7:4]);
+
+//=======================================================
+// sys console declarations
+//=======================================================
+
+sys_console u1(
+		MAX10_CLK1_50, //                   clk.clk
+		MAX10_CLK1_50, //          master_0_clk.clk
+		~rst,//KEY[0],      //    master_0_clk_reset.reset
+		master_address,       //    output   master_0_master.address
+		master_readdata,      //input .readdata
+		master_read,          //output .read
+		master_write,         //.write
+		master_writedata,     //.writedata
+		master_waitrequest,   //.waitrequest
+		master_readdatavalid, //.readdatavalid
+		master_byteenable,    //.byteenable
+	   master_reset,   // output 
+		~rst//KEY[0]   // input  
+);
+
+
 always@(*) begin
-LEDR[2:1] = (state == 5'd12)? 2'b01 : (state == 5'd6)? 2'b10 : 2'b00;
-LEDR[0]= (SW[0]==1'b1) ? 1'b1:1'b0;
-LEDR[3] = (data_in_ff == 16'hF045)? 1'b1: 1'b0;
-LEDR[4] = (state == 5'd5 )?1'b1:1'b0; //NOP state where it is waiting for key input for read and write operations
-LEDR[5] = KEY[0];
-data_in= data_in_ff;
+LEDR[0] = (state == 5'd5 )?1'b1:1'b0; //NOP state where it is waiting for key input for read and write operations
+LEDR[1] = read_LED1;
+LEDR[2] = read_LED2;
+LEDR[3] = read_LED3;
+LEDR[4] = read_LED4;
+LEDR[5] = read_LED5;
 DRAM_BA = 2'b11;
-LEDR[6]=1'b0;
 DRAM_CKE=1'b0;
 DRAM_UDQM = 1'b1;
 DRAM_LDQM = 1'b1;
 DRAM_ADDR = 13'hFFFF;
 DRAM_DQ=16'bzzzzzzzzzzzzzzzz;
+data_ready = 1'b0;
 nstate =state;
+rstate_ready=1'b0;
 case(state)
 5'b00000: begin //initial state
         DRAM_CKE = 1'b1;
-		  DRAM_RAS_N = 1'b1;
+		DRAM_RAS_N = 1'b1;
         DRAM_WE_N = 1'b1;
         DRAM_CS_N = 1'b0;
         DRAM_CAS_N = 1'b1;
-		  nstate = (init_count<20'd10000)? 5'b00000: 5'b00001;
+		nstate = (init_count<20'd10000)? 5'b00000: 5'b00001;
 		  end
 5'b00001: begin //precharge state
         DRAM_CKE = 1'b1;
-		  DRAM_RAS_N = 1'b0;
+		DRAM_RAS_N = 1'b0;
         DRAM_WE_N = 1'b0;
         DRAM_CS_N = 1'b0;
         DRAM_CAS_N = 1'b1;
-		  DRAM_BA[0] = 1'b0;//precharging both the banks
-		  DRAM_BA[1] = 1'b0;
-		  DRAM_ADDR[10] = 1'b1;
-		  nstate = (precharge_count < 2'd2) ? 5'b00001 : 5'b00010;
+		DRAM_BA[0] = 1'b0;//precharging both the banks
+		DRAM_BA[1] = 1'b0;
+		DRAM_ADDR[10] = 1'b1;
+		nstate = (precharge_count < 2'd2) ? 5'b00001 : 5'b00010;
 		  end
 5'b00010: begin  // Refresh state: At least  8 refresh cycles are required and time duration between each REF to REF is min. 60ns
 		  DRAM_CKE = 1'b1;
@@ -95,265 +136,213 @@ case(state)
 		  DRAM_WE_N = 1'b1;
         DRAM_CS_N = 1'b0;
         DRAM_CAS_N = 1'b0;
-		  nstate = 4'b0011;
+		  nstate = 5'b00011;
         end
 5'b00011: begin //NOP
         DRAM_CKE = 1'b1;
-		  DRAM_RAS_N = 1'b1;
+		DRAM_RAS_N = 1'b1;
         DRAM_WE_N = 1'b1;
         DRAM_CS_N = 1'b0;
         DRAM_CAS_N = 1'b1;
-		  nstate = (refresh_count < 4'd8)? ((nop_count<3'd4)? 5'b00011 : 5'b00010) : 5'b00100;  // 4 NOP cycles gives 80ns delay whereas min 60ns delay is required
+		nstate = (refresh_count < 4'd8)? ((nop_count<3'd4)? 5'b00011 : 5'b00010) : 5'b00100;  // 4 NOP cycles gives 80ns delay whereas min 60ns delay is required
 		  end
 5'b00100: begin //mode regester select state
-        DRAM_CKE = 1'b1;
+          DRAM_CKE = 1'b1;
 		  DRAM_RAS_N = 1'b0;
-        DRAM_WE_N = 1'b0;
-        DRAM_CS_N = 1'b0;
-        DRAM_CAS_N = 1'b0;
+          DRAM_WE_N = 1'b0;
+          DRAM_CS_N = 1'b0;
+          DRAM_CAS_N = 1'b0;
 		  DRAM_BA[0] = 1'b0;
 		  DRAM_BA[1] = 1'b0;
-		  DRAM_ADDR = {1'b0,1'b0,1'b0,1'b1,2'b00,3'b010,1'b1,3'b000};
+		  DRAM_ADDR = {1'b0,1'b0,1'b0,1'b0,2'b00,3'b010,1'b0,3'b001};
 		  nstate = 5'b00101;
 			end
 5'b00101: begin //NOP 
         DRAM_CKE = 1'b1;
-		  DRAM_RAS_N = 1'b1;
+		DRAM_RAS_N = 1'b1;
         DRAM_WE_N = 1'b1;
         DRAM_CS_N = 1'b0;
         DRAM_CAS_N = 1'b1;
-		  nstate = (SW[1] == 1'b1 && SW[2] == 1'b0 && SW[3] == 1'b0) ? 5'b01100 : (SW[1] == 1'b0 && SW[2] == 1'b1 && SW[3]==1'b0)? 5'b00110 : (SW[1] == 1'b0 && SW[2] == 1'b0 && SW[3]==1'b1)?  5'b10100:5'b00101;
+		nstate = (master_write)? 5'b01101 : (master_read) ? 5'b00110 : 5'b00101;
 		  end
 5'b00110: begin //Active state for read
         DRAM_CKE = 1'b1;
         DRAM_RAS_N = 1'b0;
-		  DRAM_WE_N = 1'b1;
+		DRAM_WE_N = 1'b1;
         DRAM_CS_N = 1'b0;
         DRAM_CAS_N = 1'b1;
-		  DRAM_ADDR =  {1'b0,1'b0,1'b0,1'b0,1'b0,8'h05}; //here A10 is 0
-		  DRAM_BA[0] = 1'b0;
-		  DRAM_BA[1] = 1'b1;
-		  nstate = 5'b00111;
+		DRAM_ADDR =  addr_row;
+		DRAM_BA[0] = 1'b0;
+		DRAM_BA[1] = 1'b1;
+		nstate = 5'b00111;
 		  end
 	
 5'b00111: begin //NOP 
         DRAM_CKE = 1'b1;
-		  DRAM_RAS_N = 1'b1;
+		DRAM_RAS_N = 1'b1;
         DRAM_WE_N = 1'b1;
         DRAM_CS_N = 1'b0;
         DRAM_CAS_N = 1'b1;
-		  nstate = 5'b01000;
+		nstate = 5'b01000;
 		  end
 		  
 5'b01000: begin //NOP 
-		  DRAM_CKE = 1'b1;
+		DRAM_CKE = 1'b1;
         DRAM_RAS_N = 1'b1;
         DRAM_WE_N = 1'b1;
         DRAM_CS_N = 1'b0;
         DRAM_CAS_N = 1'b1;
-		  nstate = 5'b01001;
+		nstate = 5'b01001;
 		  end
 	
 5'b01001: begin //read
         DRAM_CKE = 1'b1;  
         DRAM_RAS_N = 1'b1;
-		  DRAM_WE_N = 1'b1;
+		DRAM_WE_N = 1'b1;
         DRAM_CS_N = 1'b0;
         DRAM_CAS_N = 1'b0;
-		  DRAM_UDQM = 1'b0;
+		DRAM_UDQM = 1'b0;
         DRAM_LDQM = 1'b0;
-		  DRAM_BA[0] = 1'b0;
-		  DRAM_BA[1] = 1'b1;
-		  DRAM_ADDR =  {1'b0,1'b0,1'b1,1'b0,1'b0,8'h05};
-		  nstate = 5'b01010;
+		DRAM_BA[0] = 1'b0;
+		DRAM_BA[1] = 1'b1;
+		DRAM_ADDR = {1'b0,1'b0, 1'b0,read_addr_col};
+        nstate = 5'b01010;
        end
 5'b01010: begin //NOP 
+        DRAM_UDQM = 1'b0;
+        DRAM_LDQM = 1'b0;
         DRAM_RAS_N = 1'b1;
         DRAM_WE_N = 1'b1;
         DRAM_CS_N = 1'b0;
         DRAM_CAS_N = 1'b1;
-		  DRAM_CKE = 1'b1;
-		  DRAM_UDQM = 1'b0;
-        DRAM_LDQM = 1'b0;
-		  nstate = 5'b01011;
+		DRAM_CKE = 1'b1;
+		nstate = 5'b01011;
 		  end	  
-5'b01011: begin //NOP 
+5'b01011: begin //NOP with read burst 1
         DRAM_RAS_N = 1'b1;
         DRAM_WE_N = 1'b1;
         DRAM_CS_N = 1'b0;
         DRAM_CAS_N = 1'b1;
-		  DRAM_CKE = 1'b1;
-		  DRAM_UDQM = 1'b0;
+		DRAM_CKE = 1'b1;
+		DRAM_UDQM = 1'b0;
         DRAM_LDQM = 1'b0;
-		  data_in = DRAM_DQ;
-		  nstate = 5'b00101; //5'b11001;//
-		  end		 
-5'b01100: begin //Active state for write
+        rstate_ready = 1'b1;
+		nstate = 5'b01100;
+		  end
+5'b01100: begin //NOP with read burst 2
+        DRAM_RAS_N = 1'b1;
+        DRAM_WE_N = 1'b1;
+        DRAM_CS_N = 1'b0;
+        DRAM_CAS_N = 1'b1;
+		DRAM_CKE = 1'b1;
+		DRAM_UDQM = 1'b0;
+        DRAM_LDQM = 1'b0;
+        data_ready = 1'b1;
+		nstate =  5'b00101; 
+		  end			 
+5'b01101: begin //Active state for write
         DRAM_CKE = 1'b1;
         DRAM_RAS_N = 1'b0;
 		  DRAM_WE_N = 1'b1;
-        DRAM_CS_N = 1'b0;
+          DRAM_CS_N = 1'b0;
         DRAM_CAS_N = 1'b1;
-		  DRAM_ADDR =  {1'b0,1'b0,1'b0,1'b0,1'b0,8'h05}; //here A10 is 0
+		  DRAM_ADDR =  addr_row;
 		  DRAM_BA[0] = 1'b0;
 		  DRAM_BA[1] = 1'b1;
-		  nstate = 5'b01101;
-		  end
-	
-5'b01101: begin //NOP 
-        DRAM_CKE = 1'b1;
-        DRAM_RAS_N = 1'b1;
-        DRAM_WE_N = 1'b1;
-        DRAM_CS_N = 1'b0;
-        DRAM_CAS_N = 1'b1;
 		  nstate = 5'b01110;
 		  end
-		  
+	
 5'b01110: begin //NOP 
         DRAM_CKE = 1'b1;
         DRAM_RAS_N = 1'b1;
         DRAM_WE_N = 1'b1;
         DRAM_CS_N = 1'b0;
         DRAM_CAS_N = 1'b1;
-		  DRAM_UDQM = 1'b0;
-        DRAM_LDQM = 1'b0;
-		  nstate = 5'b01111;
+		nstate = 5'b01111;
 		  end
-5'b01111: begin //write
-        DRAM_CKE = 1'b1;
-        DRAM_RAS_N = 1'b1;
-		  DRAM_WE_N = 1'b0;
-        DRAM_CS_N = 1'b0;
-        DRAM_CAS_N = 1'b0;
-		  DRAM_BA[0] = 1'b0;
-		  DRAM_BA[1] = 1'b1;
-		  DRAM_UDQM = 1'b0;
-        DRAM_LDQM = 1'b0;
-		  DRAM_ADDR =  {1'b0,1'b0,1'b1,1'b0,1'b0,8'h05};
-		  DRAM_DQ = 16'h7528;
-		  nstate = 5'b10010;
-		  end
-5'b10001: begin //NOP 
+		  
+5'b01111: begin //NOP 
         DRAM_CKE = 1'b1;
         DRAM_RAS_N = 1'b1;
         DRAM_WE_N = 1'b1;
         DRAM_CS_N = 1'b0;
         DRAM_CAS_N = 1'b1;
-		  DRAM_UDQM = 1'b1;
-        DRAM_LDQM = 1'b1;
-		  nstate = 5'b10011;
+		DRAM_UDQM = 1'b0;
+        DRAM_LDQM = 1'b0;
+		nstate = 5'b10000;
 		  end
-5'b10010: begin //write
+5'b10000: begin //write with burst 1
         DRAM_CKE = 1'b1;
         DRAM_RAS_N = 1'b1;
-		  DRAM_WE_N = 1'b0;
+		DRAM_WE_N = 1'b0;
         DRAM_CS_N = 1'b0;
         DRAM_CAS_N = 1'b0;
-		  DRAM_BA[0] = 1'b0;
-		  DRAM_BA[1] = 1'b1;
-		  DRAM_UDQM = 1'b0;
+		DRAM_BA[0] = 1'b0;
+		DRAM_BA[1] = 1'b1;
+		DRAM_UDQM = 1'b0;
         DRAM_LDQM = 1'b0;
-		  DRAM_ADDR =  {1'b0,1'b0,1'b1,1'b0,1'b0,8'h07};
-		  DRAM_DQ = 16'h3297;
-		  LEDR[6] = 1'b1;
-		  nstate = 5'b10011;
-		  end
-5'b10011: begin //NOP
+		DRAM_ADDR =  {1'b0,1'b0,1'b0,write_addr_col}; 
+		DRAM_DQ = write_data[15:0];
+		nstate = 5'b10001;
+		end
+5'b10001: begin //NOP write burst
+        DRAM_UDQM = 1'b0;
+        DRAM_LDQM = 1'b0;
+        DRAM_BA[0] = 1'b0;
+		DRAM_BA[1] = 1'b1;
         DRAM_CKE = 1'b0;
         DRAM_RAS_N = 1'b1;
         DRAM_WE_N = 1'b1;
         DRAM_CS_N = 1'b0;
         DRAM_CAS_N = 1'b1;
-		  nstate = 5'b00101;
-		  end
-//Next address read	  
-
-5'b10100: begin //Active state for read
-        DRAM_CKE = 1'b1;
-        DRAM_RAS_N = 1'b0;
-		  DRAM_WE_N = 1'b1;
-        DRAM_CS_N = 1'b0;
-        DRAM_CAS_N = 1'b1;
-		  DRAM_ADDR =  {1'b0,1'b0,1'b0,1'b0,1'b0,8'h05}; //here A10 is 0
-		  DRAM_BA[0] = 1'b0;
-		  DRAM_BA[1] = 1'b1;
-		  nstate = 5'b10101;
-		  end
-	
-5'b10101: begin //NOP 
-        DRAM_CKE = 1'b1;
-		  DRAM_RAS_N = 1'b1;
-        DRAM_WE_N = 1'b1;
-        DRAM_CS_N = 1'b0;
-        DRAM_CAS_N = 1'b1;
-		  nstate = 5'b10110;
-		  end
-		  
-5'b10110: begin //NOP 
-		  DRAM_CKE = 1'b1;
-        DRAM_RAS_N = 1'b1;
-        DRAM_WE_N = 1'b1;
-        DRAM_CS_N = 1'b0;
-        DRAM_CAS_N = 1'b1;
-		  nstate = 5'b10111;
-		  end
-	
-5'b10111: begin //read
-        DRAM_CKE = 1'b1;  
-        DRAM_RAS_N = 1'b1;
-		  DRAM_WE_N = 1'b1;
-        DRAM_CS_N = 1'b0;
-        DRAM_CAS_N = 1'b0;
-		  DRAM_UDQM = 1'b0;
-        DRAM_LDQM = 1'b0;
-		  DRAM_BA[0] = 1'b0;
-		  DRAM_BA[1] = 1'b1;
-		  DRAM_ADDR =  {1'b0,1'b0,1'b1,1'b0,1'b0,8'h07};
-		  nstate = 5'b11000;
-       end
-5'b11000: begin //NOP 
-        DRAM_RAS_N = 1'b1;
-        DRAM_WE_N = 1'b1;
-        DRAM_CS_N = 1'b0;
-        DRAM_CAS_N = 1'b1;
-		  DRAM_CKE = 1'b1;
-		  DRAM_UDQM = 1'b0;
-        DRAM_LDQM = 1'b0;
-		  nstate = 5'b11001;
-		  end	  
-5'b11001: begin //NOP 
-        DRAM_RAS_N = 1'b1;
-        DRAM_WE_N = 1'b1;
-        DRAM_CS_N = 1'b0;
-        DRAM_CAS_N = 1'b1;
-		  DRAM_CKE = 1'b1;
-		  DRAM_UDQM = 1'b0;
-        DRAM_LDQM = 1'b0;
-		  data_in = DRAM_DQ;
-		  nstate = 5'b00101;
-		  end		 
+        DRAM_DQ = write_data[31:16];
+		nstate = 5'b00101;
+		  end	 
 endcase
 end
 
 always@(posedge clk or negedge rst) begin
   if(!rst) begin
-  state<=0;
-  data_in_ff <= 16'd0;
-  init_count <=0;
+  state <= 0;
+  data_in <= 0;
+  init_count <= 0;
   refresh_count <= 0;
-  nop_count<=0;
+  nop_count <= 0;
   precharge_count <= 0;
+  read_LED1 <= 1'b0;
+  read_LED2 <= 1'b0;
+  read_LED3 <= 1'b0;
+  read_LED4 <= 1'b0;
+  read_LED5 <= 1'b0;
+  master_readdata <= 16'h0000;
+  master_readdatavalid <= 1'b0;
+  master_waitrequest <= 1'b0;
+  write_addr_col <= 0;
+  write_data <= 0;
+  addr_row <= 0;
+  read_addr_col <= 0;
   end
  else begin
-  state<=nstate;
-  data_in_ff <= data_in; 
+  state  <= nstate;
   init_count <= (state == 5'd0)? ((init_count<20'd10000)? (init_count + 1'b1) : init_count): init_count;
   precharge_count <= (state == 5'b00001)? ((precharge_count < 2'd2) ? (precharge_count + 1'b1) : precharge_count) : precharge_count;
   refresh_count <= (state == 5'b00010) ? ((refresh_count < 4'd8) ? (refresh_count + 1'b1) : refresh_count) : refresh_count; 
   nop_count <= (state == 5'b00011) ? ((nop_count< 3'd4) ? (nop_count + 1'b1) : 3'd0) : nop_count;
+  //read_LED1 <= (master_read)? 1'b1 : read_LED1;
+  //read_LED2 <= (master_write)? 1'b1 : read_LED2;
+  //read_LED3 <= (state == 5'b10100) ? 1'b1: read_LED3;
+  //read_LED4 <= (state == 5'b01111) ? 1'b1: read_LED4;
+ // read_LED5 <= (state == 5'b10010) ? 1'b1: read_LED5;
+    write_addr_col <= (master_write)? master_address[25:16] : write_addr_col;
+	write_data <= (master_write) ? master_writedata : write_data;
+	addr_row <= master_address[12:0];
+    read_addr_col <= (master_read)? master_address[25:16]: read_addr_col;
+	master_readdatavalid <= (data_ready)? 1'b1: 1'b0;
+    data_in <= (rstate_ready)? DRAM_DQ : data_in;
+    master_readdata <= {DRAM_DQ,data_in};
+	master_waitrequest <= (master_write == 1'b1 || data_ready == 1'b1) ? 1'b0 : 1'b1;
  end
 end
-
 
 function [7:0] numdisp;
         input [3:0] num;
@@ -408,8 +397,4 @@ function [7:0] numdisp;
                 end
         endcase
 endfunction
-
-
-
-
 endmodule

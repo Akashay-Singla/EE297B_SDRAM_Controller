@@ -1,0 +1,17 @@
+set jtag_debug_path [lindex [get_service_paths jtag_debug] 0]
+jtag_debug_sample_clock $jtag_debug_path
+
+
+get_service_paths master
+set master_path [lindex [get_service_paths master ] 0]
+jtag_debug_sample_clock $master_path
+jtag_debug_sense_clock $master_path
+jtag_debug_sample_reset $master_path
+open_service master $master_path
+master_read_16 $master_path 0x00008000 1 
+
+master_write_32 $master_path 0x00008000 0x40435987
+
+master_write_32 $master_path 0x00040078 0x40435925
+master_read_32 $master_path 0x00040078 1
+close_service master $master_path
