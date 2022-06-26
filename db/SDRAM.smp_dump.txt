@@ -1,24 +1,31 @@
 
 State Machine - |DE10_LITE_Golden_Top|state
-Name state.10001 state.10000 state.01111 state.01110 state.01101 state.01100 state.01011 state.01010 state.01001 state.01000 state.00111 state.00110 state.00101 state.00100 state.00011 state.00010 state.00001 state.00000 
-state.00000 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
-state.00001 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 
-state.00010 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 1 
-state.00011 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 1 
-state.00100 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 1 
-state.00101 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 1 
-state.00110 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 
-state.00111 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1 
-state.01000 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 
-state.01001 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 1 
-state.01010 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 1 
-state.01011 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 1 
-state.01100 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 
-state.01101 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1 
-state.01110 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
-state.01111 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
-state.10000 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
-state.10001 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+Name state.11000 state.10111 state.10110 state.10101 state.10100 state.10011 state.10010 state.10001 state.10000 state.01111 state.01110 state.01101 state.01100 state.01011 state.01010 state.01001 state.01000 state.00111 state.00110 state.00101 state.00100 state.00011 state.00010 state.00001 state.00000 
+state.00000 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+state.00001 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 
+state.00010 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 1 
+state.00011 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 1 
+state.00100 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 1 
+state.00101 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 1 
+state.00110 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 
+state.00111 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1 
+state.01000 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 
+state.01001 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 1 
+state.01010 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 1 
+state.01011 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 1 
+state.01100 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 
+state.01101 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.01110 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.01111 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.10000 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.10001 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.10010 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.10011 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.10100 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.10101 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.10110 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.10111 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.11000 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
 
 State Machine - |DE10_LITE_Golden_Top|sys_console:u1|sys_console_master_0:master_0|altera_avalon_packets_to_master:transacto|packets_to_master:p2m|state
 Name state.READ_SEND_WAIT state.READ_SEND_ISSUE state.READ_DATA_WAIT state.READ_CMD_WAIT state.READ_ASSERT state.RETURN_PACKET state.WRITE_WAIT state.GET_WRITE_DATA state.GET_ADDR4 state.GET_ADDR3 state.GET_ADDR2 state.GET_ADDR1 state.GET_SIZE2 state.GET_SIZE1 state.GET_EXTRA state.0000 

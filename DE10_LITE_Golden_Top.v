@@ -48,9 +48,8 @@ reg [19:0] init_count;
 reg [1:0] precharge_count;
 reg [3:0] refresh_count;
 reg [2:0] nop_count;
-reg data_ready;
 wire clk,rst;
-reg read_LED1, read_LED2,read_LED3, read_LED4,read_LED5;
+reg read_LED1, read_LED2,read_LED3, read_LED4,read_LED5,read_LED6;
 wire [31:0] master_address; //output
 reg [31:0] master_readdata; //input
 wire master_read; //output
@@ -60,27 +59,42 @@ wire [31:0] master_writedata;//output
 reg master_waitrequest;//input
 reg master_readdatavalid;//input
 wire [3:0] master_byteenable;//output
-reg rstate_ready;
+reg rstate_ready,fpa_start,fpa_data_ready1,fpa_data_ready2,fifo_data_ready;
+wire [15:0]FPSUM_34;
+wire Ovf_Flag_34,Unf_Flag_34;
+reg [15:0] Finput1_34,Finput2_34,fifo_data_in,Finput1_temp;
+wire [15:0]fifo_data_out;
+reg fifo_push,fifo_pull, fifo_pull2,data_ready, fifo_data_ready_temp;
+wire fifo_empty,fifo_full;
+reg [31:0] fpa_read_addr;
+
+
+
 
 
 assign DRAM_CLK = MAX10_CLK1_50;
 assign clk = MAX10_CLK1_50;
 assign rst = KEY[0];
-assign HEX0 = numdisp(DRAM_DQ[3:0]);
-assign HEX1 = numdisp(DRAM_DQ[7:4]);
-assign HEX2 = numdisp(DRAM_DQ[11:8]);
-assign HEX3 = numdisp(DRAM_DQ[15:12]);
-assign HEX4 = numdisp(master_readdata[3:0]);
-assign HEX5 = numdisp(master_readdata[7:4]);
+assign HEX0 = numdisp(FPSUM_34[3:0]);
+assign HEX1 = numdisp(FPSUM_34[7:4]);
+assign HEX2 = numdisp(FPSUM_34[11:8]);
+assign HEX3 = numdisp(FPSUM_34[15:12]);
+//assign HEX0 = numdisp(DRAM_DQ[3:0]);
+//assign HEX1 = numdisp(DRAM_DQ[7:4]);
+//assign HEX2 = numdisp(DRAM_DQ[11:8]);
+//assign HEX3 = numdisp(DRAM_DQ[15:12]);
+assign HEX4 = numdisp(Finput1_34[3:0]);
+assign HEX5 = numdisp(Finput2_34[3:0]);
 
 //=======================================================
 // sys console declarations
 //=======================================================
-
+fpa_adder fpa0(clk,rst,Finput1_34,Finput2_34,FPSUM_34,Ovf_Flag_34,Unf_Flag_34);
+fifo_design fifo0 (clk,rst,fifo_data_in,fifo_push,fifo_pull,fifo_data_out,fifo_empty,fifo_full);
 sys_console u1(
-		MAX10_CLK1_50, //                   clk.clk
-		MAX10_CLK1_50, //          master_0_clk.clk
-		~rst,//KEY[0],      //    master_0_clk_reset.reset
+		MAX10_CLK1_50, //      clk
+		MAX10_CLK1_50, //     clk
+		~rst,//KEY[0],      //reset
 		master_address,       //    output   master_0_master.address
 		master_readdata,      //input .readdata
 		master_read,          //output .read
@@ -101,6 +115,7 @@ LEDR[2] = read_LED2;
 LEDR[3] = read_LED3;
 LEDR[4] = read_LED4;
 LEDR[5] = read_LED5;
+LEDR[6] = read_LED6;
 DRAM_BA = 2'b11;
 DRAM_CKE=1'b0;
 DRAM_UDQM = 1'b1;
@@ -110,6 +125,8 @@ DRAM_DQ=16'bzzzzzzzzzzzzzzzz;
 data_ready = 1'b0;
 nstate =state;
 rstate_ready=1'b0;
+fpa_data_ready1=1'b0;
+fpa_data_ready2=1'b0;
 case(state)
 5'b00000: begin //initial state
         DRAM_CKE = 1'b1;
@@ -163,7 +180,8 @@ case(state)
         DRAM_WE_N = 1'b1;
         DRAM_CS_N = 1'b0;
         DRAM_CAS_N = 1'b1;
-		nstate = (master_write)? 5'b01101 : (master_read) ? 5'b00110 : 5'b00101;
+		nstate = (master_write==1'b1 && master_address != 32'h00008000)? 5'b01101 : (master_read==1'b1 && (master_address != 32'h00008000)) ? 5'b00110 : 
+                (fpa_start == 1'b1)? 5'b10010 :5'b00101;
 		  end
 5'b00110: begin //Active state for read
         DRAM_CKE = 1'b1;
@@ -298,6 +316,82 @@ case(state)
         DRAM_DQ = write_data[31:16];
 		nstate = 5'b00101;
 		  end	 
+5'b10010: begin //Active state for read for FPA
+        DRAM_CKE = 1'b1;
+        DRAM_RAS_N = 1'b0;
+		DRAM_WE_N = 1'b1;
+        DRAM_CS_N = 1'b0;
+        DRAM_CAS_N = 1'b1;
+		DRAM_ADDR =  fpa_read_addr[12:0];
+		DRAM_BA[0] = 1'b0;
+		DRAM_BA[1] = 1'b1;
+		nstate = 5'b10011;
+		  end
+	
+5'b10011: begin //NOP for FPA
+        DRAM_CKE = 1'b1;
+		DRAM_RAS_N = 1'b1;
+        DRAM_WE_N = 1'b1;
+        DRAM_CS_N = 1'b0;
+        DRAM_CAS_N = 1'b1;
+		nstate = 5'b10100;
+		  end
+		  
+5'b10100: begin //NOP for FPA
+		DRAM_CKE = 1'b1;
+        DRAM_RAS_N = 1'b1;
+        DRAM_WE_N = 1'b1;
+        DRAM_CS_N = 1'b0;
+        DRAM_CAS_N = 1'b1;
+		nstate = 5'b10101;
+		  end
+	
+5'b10101: begin //read for FPA
+        DRAM_CKE = 1'b1;  
+        DRAM_RAS_N = 1'b1;
+		DRAM_WE_N = 1'b1;
+        DRAM_CS_N = 1'b0;
+        DRAM_CAS_N = 1'b0;
+		DRAM_UDQM = 1'b0;
+        DRAM_LDQM = 1'b0;
+		DRAM_BA[0] = 1'b0;
+		DRAM_BA[1] = 1'b1;
+		DRAM_ADDR = {1'b0,1'b0, 1'b0,fpa_read_addr[25:16]};
+        nstate = 5'b10110;
+       end
+5'b10110: begin //NOP  for FPA
+        DRAM_UDQM = 1'b0;
+        DRAM_LDQM = 1'b0;
+        DRAM_RAS_N = 1'b1;
+        DRAM_WE_N = 1'b1;
+        DRAM_CS_N = 1'b0;
+        DRAM_CAS_N = 1'b1;
+		DRAM_CKE = 1'b1;
+		nstate = 5'b10111;
+		  end	  
+5'b10111: begin //NOP with read burst 1 for FPA
+        DRAM_RAS_N = 1'b1;
+        DRAM_WE_N = 1'b1;
+        DRAM_CS_N = 1'b0;
+        DRAM_CAS_N = 1'b1;
+		DRAM_CKE = 1'b1;
+		DRAM_UDQM = 1'b0;
+        DRAM_LDQM = 1'b0;
+        fpa_data_ready1 = 1'b1;
+		nstate = 5'b11000;
+		  end
+5'b11000: begin //NOP with read burst 2 for FPA
+        DRAM_RAS_N = 1'b1;
+        DRAM_WE_N = 1'b1;
+        DRAM_CS_N = 1'b0;
+        DRAM_CAS_N = 1'b1;
+		DRAM_CKE = 1'b1;
+		DRAM_UDQM = 1'b0;
+        DRAM_LDQM = 1'b0;
+        fpa_data_ready2 = 1'b1;
+		nstate =  5'b00101; 
+		  end	
+    
 endcase
 end
 
@@ -313,7 +407,7 @@ always@(posedge clk or negedge rst) begin
   read_LED2 <= 1'b0;
   read_LED3 <= 1'b0;
   read_LED4 <= 1'b0;
-  read_LED5 <= 1'b0;
+  read_LED5 <= 1'b0; read_LED6 <= 0;
   master_readdata <= 16'h0000;
   master_readdatavalid <= 1'b0;
   master_waitrequest <= 1'b0;
@@ -321,6 +415,13 @@ always@(posedge clk or negedge rst) begin
   write_data <= 0;
   addr_row <= 0;
   read_addr_col <= 0;
+  fpa_start <= 0;
+  fpa_read_addr <= 0;
+  fifo_pull2 <= 0;
+  fifo_pull <=0; 
+  fifo_push <=0;
+  fifo_data_in<=0; fifo_data_ready <=0;fifo_data_ready_temp <=0;
+  Finput1_34 <=0; Finput2_34 <= 0; Finput1_temp <=0;
   end
  else begin
   state  <= nstate;
@@ -328,19 +429,32 @@ always@(posedge clk or negedge rst) begin
   precharge_count <= (state == 5'b00001)? ((precharge_count < 2'd2) ? (precharge_count + 1'b1) : precharge_count) : precharge_count;
   refresh_count <= (state == 5'b00010) ? ((refresh_count < 4'd8) ? (refresh_count + 1'b1) : refresh_count) : refresh_count; 
   nop_count <= (state == 5'b00011) ? ((nop_count< 3'd4) ? (nop_count + 1'b1) : 3'd0) : nop_count;
-  //read_LED1 <= (master_read)? 1'b1 : read_LED1;
-  //read_LED2 <= (master_write)? 1'b1 : read_LED2;
-  //read_LED3 <= (state == 5'b10100) ? 1'b1: read_LED3;
-  //read_LED4 <= (state == 5'b01111) ? 1'b1: read_LED4;
- // read_LED5 <= (state == 5'b10010) ? 1'b1: read_LED5;
-    write_addr_col <= (master_write)? master_address[25:16] : write_addr_col;
-	write_data <= (master_write) ? master_writedata : write_data;
+  read_LED1 <= Unf_Flag_34;//(Unf_Flag_34)? 1'b1 : read_LED1;
+  read_LED2 <= fifo_full;//(master_write)? 1'b1 : read_LED2;
+  read_LED3 <= fifo_push;//(fifo_push) ? 1'b1: read_LED3;
+  read_LED4 <= fifo_pull;//(fifo_pull) ? 1'b1: read_LED4;
+  read_LED5 <= fifo_empty;//(Unf_Flag_34) ? 1'b1: read_LED5;
+  read_LED6 <= Ovf_Flag_34;
+    write_addr_col <= ((master_write==1'b1) && (master_address != 32'h00008000))? master_address[25:16] : write_addr_col;
+	write_data <= ((master_write==1'b1) && (master_address != 32'h00008000)) ? master_writedata : write_data;
 	addr_row <= master_address[12:0];
-    read_addr_col <= (master_read)? master_address[25:16]: read_addr_col;
-	master_readdatavalid <= (data_ready)? 1'b1: 1'b0;
+    read_addr_col <= ((master_read == 1'b1) && (master_address != 32'h00008000))? master_address[25:16]: read_addr_col;
+	master_readdatavalid <= (data_ready==1'b1 || fifo_pull2==1'b1)? 1'b1: 1'b0;
     data_in <= (rstate_ready)? DRAM_DQ : data_in;
-    master_readdata <= {DRAM_DQ,data_in};
-	master_waitrequest <= (master_write == 1'b1 || data_ready == 1'b1) ? 1'b0 : 1'b1;
+    master_readdata <= (data_ready)? {DRAM_DQ,data_in}: (fifo_pull2 == 1'b1) ? {16'h0000, fifo_data_out} : 0;
+
+	master_waitrequest <= (master_write == 1'b1 || data_ready == 1'b1 || fifo_pull2 == 1'b1 ) ? 1'b0 : 1'b1;
+    Finput1_temp <= (fpa_data_ready1) ? DRAM_DQ : Finput1_temp;
+    Finput1_34 <= Finput1_temp;
+    fifo_push <= (fifo_data_ready && Unf_Flag_34==1'b0 && Ovf_Flag_34==1'b0 && fifo_full==1'b0)? 1'b1: 1'b0;
+    fifo_pull <= ((master_read == 1'b1) && (master_address == 32'h00008000))? 1'b1 : 1'b0;
+    fifo_pull2 <= fifo_pull;
+    fifo_data_ready_temp <= fpa_data_ready2;
+    fifo_data_ready <= fifo_data_ready_temp;//FPA gives ouput in one clock cycle
+    fifo_data_in <= FPSUM_34; 
+    Finput2_34 <= (fpa_data_ready2)? DRAM_DQ : Finput2_34; 
+    fpa_start <= (master_write)? ((master_address == 32'h00008000)? 1'b1 : 1'b0): 1'b0;  
+    fpa_read_addr <= (master_address == 32'h00008000)? master_writedata : fpa_read_addr;
  end
 end
 

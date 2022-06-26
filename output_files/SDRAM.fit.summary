@@ -1,14 +1,14 @@
-Fitter Status : Successful - Fri Jun 24 23:16:11 2022
+Fitter Status : Successful - Sun Jun 26 00:11:17 2022
 Quartus Prime Version : 21.1.0 Build 842 10/21/2021 SJ Lite Edition
 Revision Name : SDRAM
 Top-level Entity Name : DE10_LITE_Golden_Top
 Family : MAX 10
 Device : 10M50DAF484C6GES
 Timing Models : Preliminary
-Total logic elements : 1,193 / 49,760 ( 2 % )
-    Total combinational functions : 954 / 49,760 ( 2 % )
-    Dedicated logic registers : 684 / 49,760 ( 1 % )
-Total registers : 684
+Total logic elements : 2,112 / 49,760 ( 4 % )
+    Total combinational functions : 1,772 / 49,760 ( 4 % )
+    Dedicated logic registers : 966 / 49,760 ( 2 % )
+Total registers : 966
 Total pins : 148 / 360 ( 41 % )
 Total virtual pins : 0
 Total memory bits : 512 / 1,677,312 ( < 1 % )
